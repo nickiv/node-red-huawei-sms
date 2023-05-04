@@ -1,0 +1,49 @@
+<script type="text/javascript">
+  RED.nodes.registerType("huawei-sms-send", {
+    category: "huawei-sms",
+    color: '#FDF0C2',
+    icon: "font-awesome/fa-comment-pen",
+    defaults: {
+      name: {value: ""},
+      phone: {value: ""},
+      config: {value: "", type: "huawei-sms-config"}
+    },
+    inputs: 1,
+    outputs: 1,
+    label: function() {
+      return this.name || "Send SMS";
+    }
+  });
+</script>
+
+<script type="text/html" data-template-name="huawei-sms-send">
+  <div class="form-row">
+    <label for="node-input-config">Config</label>
+    <input type="text" id="node-input-config">
+  </div>
+  <div class="form-row">
+    <label for="node-input-phone">Phone</label>
+    <input type="text" id="node-input-phone">
+  </div>
+  <div class="form-row">
+    <label for="node-input-name">Name</label>
+    <input type="text" type="text" id="node-input-name">
+  </div>
+</script>
+
+<script type="text/html" data-help-name="huawei-sms-send">
+  <p>A node that controls SwitchBot device using SwitchBot's <code>command</code> web API</p>
+
+  <h3>Inputs</h3>
+  <dl class="message-properties">
+    <dt>API token <span class="property-type">string</span></dt>
+    <dd>The developer API token which is generated from the official SwitchBot app; simply follow the steps in the package's README.</dd>
+
+    <dt>Device name <span class="property-type">string</span></dt>
+    <dd>The name of the device.</dd>
+
+    <dt>Name <span class="property-type">string</span></dt>
+    <dd>The label of the node.</dd>
+  </dl>
+
+</script>
