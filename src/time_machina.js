@@ -25,22 +25,22 @@ module.exports = machina.Fsm.extend({
     },
     debug : function(){
       var args = [].slice.call(arguments);
-      args.unshift(this.namespace);
+      args.unshift(this.namespace + ':');
       return log.debug.apply(log, args);
     },
     error : function(){
       var args = [].slice.call(arguments);
-      args.unshift(this.namespace);
+      args.unshift(this.namespace + ':');
       return log.error.apply(log, args);
     },
     info : function(){
       var args = [].slice.call(arguments);
-      args.unshift(this.namespace);
+      args.unshift(this.namespace + ':');
       return log.info.apply(log, args);
     },
     warn : function(){
       var args = [].slice.call(arguments);
-      args.unshift(this.namespace);
+      args.unshift(this.namespace + ':');
       return log.warn.apply(log, args);
     },
     constructor : function(){

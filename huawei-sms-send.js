@@ -7,7 +7,7 @@ module.exports = function(RED) {
         this.phone = n.phone;
         this.config = RED.nodes.getNode(n.config);
         node.on("input", function(msg, send, done){
-          var req = api.sendSms(node.config.ip, node.config.admin_password, node.phone, msg.payload);
+          var req = api.sendSms(node.config.ip, node.config.credentials.password, node.phone, msg.payload);
           req.on('success', function(resp){
             msg.payload = resp;
             send(msg);
