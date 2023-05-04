@@ -1,0 +1,40 @@
+<script type="text/javascript">
+    RED.nodes.registerType('huawei-sms-config', {
+        category: 'config',
+        defaults: {
+            ip: {
+                value: "192.168.8.1",
+                required: true
+            },
+            admin_password: {
+                value: "",
+                required: true
+            }
+        },
+        label: function() {
+            return this.ip;
+        }
+    });
+</script>
+
+<script type="text/html" data-template-name="huawei-sms-config">
+    <div class="form-row">
+        <label for="node-config-input-ip">IP Address</label>
+        <input type="text" id="node-config-input-ip">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-admin_password">Admin Password</label>
+        <input type="text" id="node-config-input-admin_password">
+    </div>
+</script>
+
+<script type="text/html" data-help-name="huawei-sms-config">
+    <p>Huawei Modev Configuration</p>
+
+    <h3>Inputs</h3>
+    <dl class="message-properties">
+        <dt>API token <span class="property-type">string</span></dt>
+        <dd>TODO</dd>
+    </dl>
+
+</script>

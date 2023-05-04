@@ -1,0 +1,23 @@
+{
+  "name": "node-red-contrib-huawei-sms-api",
+  "version": "0.1",
+  "description": "A node to send and receive SMS from Huawei modem",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "node-red": {
+    "nodes": {
+      "huawei-sms-send": "huawei-sms-send.js",
+      "huawei-sms-config": "huawei-sms-config.js"
+    }
+  },
+  "author": "Nikolay Ivannikov",
+  "license": "ISC",
+  "keywords": [
+    "node-red"
+  ],
+  "dependencies": {
+    "machina": "^4.0.0",
+    "elementtree": "0.1.6"
+  }
+}
