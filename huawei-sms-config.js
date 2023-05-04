@@ -1,4 +1,4 @@
-const api = require("./huawei-sms-api");
+const HuaweiModem = require("./huawei-modem");
 const et          = require('elementtree');
 const TimeMachina = require("./src/time_machina");
 
@@ -12,6 +12,10 @@ module.exports = function(RED) {
         }
         this.delReceiver = function(node){
             this.sm.delReceiver(node);
+        }
+        var modem = new HuaweiModem(this.ip, this.credentials.password);
+        this.getModem = function(){
+            return modem;
         }
         this.sm = new TimeMachina({
             namespace : "Huawei Receive SMS #" + node.id,
@@ -44,8 +48,7 @@ module.exports = function(RED) {
               },
               POLL : {
                 _onEnter : function(){
-                  //this.node.status({});
-                  var req = api.getSms(node.ip, node.credentials.password);
+                  var req = modem.getSms(1);
                   req.on('success', this.handle.bind(this, 'poll_success'));
                   req.on('error', this.handle.bind(this, 'poll_error'));
                   this.updateStatus({fill: "yellow", shape: "ring", text: "poll"});
@@ -53,10 +56,9 @@ module.exports = function(RED) {
                 poll_success : function(smsXML){
                   this.updateStatus({fill: "green", shape: "dot", text: "ok"});
                   var etree = et.parse(smsXML);
-                    var msg_arr = [];
-                    var messages = etree.findall('./Messages/Message');
-                    if (messages){
-                      for (var i = 0; i < messages.length; i++){
+                  var messages = etree.findall('./Messages/Message');
+                  if (messages){
+                    for (var i = 0; i < messages.length; i++){
                         var msg = {
                             payload : {
                                 index      : messages[i].findtext('Index'),
@@ -64,16 +66,15 @@ module.exports = function(RED) {
                                 date    : new Date(messages[i].findtext('Date')),
                                 phone  : messages[i].findtext('Phone'),
                             }
-                        };
+                        }
                         for (var id in this.smsReceivers){
                             this.debug('Sending msg to receiver #' + id);
                             this.smsReceivers[id].sendme(msg);
                         }
-
-                        api.delSms(node.ip, node.credentials.password, messages[i].findtext('Index'));
-                      }
+                        modem.delSms(messages[i].findtext('Index'));
                     }
-                    this.transition('IDLE');
+                  }
+                  this.transition('IDLE');
                 },
                 poll_error : function(err){
                   this.updateStatus({fill: "red", shape: "ring", text: err});
@@ -87,9 +88,13 @@ module.exports = function(RED) {
                   this._scheduleEvent('go_poll', 20000);
                 },
                 go_poll : function(){
-
+                    for (var id in this.smsReceivers){
+                        this.transition('POLL');
+                        return;
+                    }
                 },
                 node_close : 'CLOSED',
+                new_receiver : 'POLL',
               },
               CLOSED : {
 
