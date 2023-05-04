@@ -124,6 +124,14 @@ const huaweiApiRequest = TimeMachina.extend({
         http_success : function(res){
           this.debug('login resp', this.resp_data, res.statusCode);
           if (res.statusCode != 200){
+            var err = 'AUTH login status ' + res.statusCode;
+            this.error(err);
+            this.emit('error', err);
+            return;
+          }
+          if (this.resp_data.indexOf('<error>') >= 0){
+            this.error('error in login response', this.resp_data);
+            this.emit('error', this.resp_data);
             return;
           }
           this.transition('WORK');
@@ -142,6 +150,7 @@ const huaweiApiRequest = TimeMachina.extend({
           });
         },
         http_success : function(res){
+          this.debug(this.resp_data);
           this.transition('CLOSED');
         },
         http_error : function(err){
@@ -179,31 +188,11 @@ const huaweiApiRequest = TimeMachina.extend({
         },
         http_success : function(res){
             if (this.resp_data.indexOf('<error>') >= 0){
-              this.error('error response', this.resp_data);
+              this.error('error in command response', this.resp_data);
               this.emit('error', this.resp_data);
               return;
             }
-            this.debug(this.resp_data);/*
-            switch (this.command.cmd){
-              case 'list':
-                if (typeof this.currentCommand.args[1] == 'function'){
-                  var etree = et.parse(this.resp_data);
-                  var msg_arr = [];
-                  var messages = etree.findall('./Messages/Message');
-                  if (messages){
-                    for (var i = 0; i < messages.length; i++){
-                      msg_arr.push({
-                        id      : messages[i].findtext('Index'),
-                        content : messages[i].findtext('Content'),
-                        date    : messages[i].findtext('Date'),
-                        sender  : messages[i].findtext('Phone'),
-                      });
-                    }
-                  }
-                  this.currentCommand.args[1](msg_arr);
-                }
-                break;
-            }*/
+            this.debug(this.resp_data);
             this.emit('success', this.resp_data);
             this.transition('LOGOUT');
         },
@@ -212,6 +201,9 @@ const huaweiApiRequest = TimeMachina.extend({
           this.emit('error', err);
         }
       }
+    },
+    CLOSED : {
+      
     }
   });
 
@@ -223,5 +215,17 @@ module.exports = {
           cmd : 'sms',
           args: [phone, messageText]
         });
+    },
+    getSms: function(ip, password){
+        return new huaweiApiRequest(ip, password, {
+          cmd : 'list',
+          args: [1]
+        });
+    },
+    delSms: function(ip, password, idx){
+      return new huaweiApiRequest(ip, password, {
+        cmd : 'delete',
+        args: [idx]
+      });
     },
 };

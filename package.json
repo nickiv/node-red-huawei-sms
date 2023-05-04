@@ -8,6 +8,7 @@
   "node-red": {
     "nodes": {
       "huawei-sms-send": "huawei-sms-send.js",
+      "huawei-sms-receive": "huawei-sms-receive.js",
       "huawei-sms-config": "huawei-sms-config.js"
     }
   },

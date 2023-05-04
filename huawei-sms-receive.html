@@ -1,29 +1,23 @@
 <script type="text/javascript">
-  RED.nodes.registerType("huawei-sms-send", {
+  RED.nodes.registerType("huawei-sms-receive", {
     category: "huawei-sms",
     color: '#FDF0C2',
-    icon: "font-awesome/fa-sign-out",
+    icon: "font-awesome/fa-commenting-o",
     defaults: {
       name: {value: ""},
-      phone: {value: ""},
       config: {value: "", type: "huawei-sms-config"}
     },
-    inputs: 1,
     outputs: 1,
     label: function() {
-      return this.name || "Send SMS";
+      return this.name || "Receive SMS";
     }
   });
 </script>
 
-<script type="text/html" data-template-name="huawei-sms-send">
+<script type="text/html" data-template-name="huawei-sms-receive">
   <div class="form-row">
     <label for="node-input-config">Config</label>
     <input type="text" id="node-input-config">
-  </div>
-  <div class="form-row">
-    <label for="node-input-phone">Phone</label>
-    <input type="text" id="node-input-phone">
   </div>
   <div class="form-row">
     <label for="node-input-name">Name</label>
@@ -31,7 +25,7 @@
   </div>
 </script>
 
-<script type="text/html" data-help-name="huawei-sms-send">
+<script type="text/html" data-help-name="huawei-sms-receive">
   <p>A node that controls SwitchBot device using SwitchBot's <code>command</code> web API</p>
 
   <h3>Inputs</h3>

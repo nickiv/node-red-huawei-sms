@@ -5,11 +5,10 @@
             ip: {
                 value: "192.168.8.1",
                 required: true
-            },
-            admin_password: {
-                value: "",
-                required: true
             }
+        },
+        credentials: {
+            password: { type : "password"}
         },
         label: function() {
             return this.ip;
@@ -23,8 +22,8 @@
         <input type="text" id="node-config-input-ip">
     </div>
     <div class="form-row">
-        <label for="node-config-input-admin_password">Admin Password</label>
-        <input type="text" id="node-config-input-admin_password">
+        <label for="node-config-input-password">Admin Password</label>
+        <input type="password" id="node-config-input-password">
     </div>
 </script>
 
