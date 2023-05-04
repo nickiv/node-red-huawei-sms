@@ -1,20 +1,40 @@
 const http = require("http");
 const crypto = require("crypto");
-//var et          = require('elementtree');
 
 const TimeMachina = require('./src/time_machina');
+const { EventEmitter } = require("stream");
+const { nextTick } = require("process");
 
-const huaweiApiRequest = TimeMachina.extend({
-    namespace : 'HuaweiApiRequest',
+module.exports = TimeMachina.extend({
+    namespace : 'HuaweiModem',
 
-    initialize : function(ip, password, cmd){
+    initialize : function(ip, password){
       this.debug('intitalize');
       this.csrf_token = null;
       this.cookie = null;
       this.login = 'admin';
       this.ip = ip;
       this.password = password;
-      this.command = cmd;
+      this.queue = [];
+    },
+    sendSms : function(){
+      return this.queueRequest('sms', arguments);
+    },
+    getSms : function(){
+      return this.queueRequest('list', arguments);
+    },
+    delSms : function(){
+      return this.queueRequest('delete', arguments);
+    },
+    queueRequest : function(method, args){
+      this.info('queueRequest', method, args);
+      var resEmitter = new EventEmitter();
+      process.nextTick(this.handle.bind(this, 'new_request', {
+        method : method,
+        args : args,
+        res: resEmitter
+      }));
+      return resEmitter;
     },
     setCookie : function(res){
       if ('set-cookie' in res.headers){
@@ -72,8 +92,40 @@ const huaweiApiRequest = TimeMachina.extend({
     processHTTPData : function(chunk){
       this.resp_data += chunk;
     },
+    processCommand : function(){
+      var req = this.currentRequest;
+      this.info('processCommand', req.method, req.args);
+      switch (req.method){
+        case 'sms':
+          this.request({
+            url : '/api/sms/send-sms',
+            method : 'POST',
+            data : '<?xml version="1.0" encoding="UTF-8"?><request><Index>-1</Index><Phones><Phone>' + req.args[0] + '</Phone></Phones><Sca></Sca><Content>' + req.args[1] + '</Content><Length>' + req.args[1].length + '</Length><Reserved>1</Reserved><Date>2016-01-31 00:45:1</Date></request>'
+          });
+          break;
+        case 'list':
+          this.request({
+            url : '/api/sms/sms-list',
+            method : 'POST',
+            data : '<?xml version="1.0" encoding="UTF-8"?><request><PageIndex>1</PageIndex><ReadCount>20</ReadCount><BoxType>' + req.args[0] + '</BoxType><SortType>0</SortType><Ascending>0</Ascending><UnreadPreferred>0</UnreadPreferred></request>'
+          });
+          break;
+        case 'delete':
+          this.request({
+            url : '/api/sms/delete-sms',
+            method : 'POST',
+            data : '<?xml version="1.0" encoding="UTF-8"?><request><Index>' + req.args[0] + '</Index></request>'
+          });
+          break;
+      }
+    },
+    malfunction: function(err){
+      this.error(err);
+      this.currentRequest.res.emit('error', err);
+      this.transition('uninitialized');
+    },
     states : {
-      uninitialized : {
+      GET_CSRF : {
         _onEnter : function(){
           this.request({
             url : '/html/index.html'
@@ -81,8 +133,7 @@ const huaweiApiRequest = TimeMachina.extend({
         },
         http_success : function(res){
           if (res.statusCode != 200){
-            this.error('Odd status /html/index.html');
-            this.emit('error', 'Statuscode=' . res.statusCode);
+            this.malfunction(util.format('Request to /html/index.html failed with code %d', res.statusCode));
             return;
           }
   
@@ -98,15 +149,16 @@ const huaweiApiRequest = TimeMachina.extend({
             }
           }
           if (!this.csrf_token){
-            this.error('No csrf token in /html/index.html');
-            this.emit('error', 'No csrf token');
+            this.malfunction('No csrf token in /html/index.html');
             return;
           }
           this.transition('AUTH');
         },
         http_error : function(err){
-          this.error(err);
-          this.emit('error', err);
+          this.malfunction(err);
+        },
+        new_request : function(req){
+          this.queue.push(req);
         }
       },
       AUTH : {
@@ -124,21 +176,22 @@ const huaweiApiRequest = TimeMachina.extend({
         http_success : function(res){
           this.debug('login resp', this.resp_data, res.statusCode);
           if (res.statusCode != 200){
-            var err = 'AUTH login status ' + res.statusCode;
-            this.error(err);
-            this.emit('error', err);
+            this.malfunction(util.format('Request to /api/user/login failed with code %d', res.statusCode));
             return;
           }
           if (this.resp_data.indexOf('<error>') >= 0){
-            this.error('error in login response', this.resp_data);
-            this.emit('error', this.resp_data);
+            this.malfunction(this.resp_data);
             return;
           }
           this.transition('WORK');
         },
         http_error : function(err){
           this.error(err);
-          this.emit('error', err);
+          this.currentRequest.res.emit('error', err);
+          this.transition('uninitialized');
+        },
+        new_request : function(req){
+          this.queue.push(req);
         }
       },
       LOGOUT : {
@@ -151,81 +204,67 @@ const huaweiApiRequest = TimeMachina.extend({
         },
         http_success : function(res){
           this.debug(this.resp_data);
-          this.transition('CLOSED');
+          this.transition('uninitialized');
         },
         http_error : function(err){
           this.error(err);
-          this.emit('error', err);
+          this.transition('uninitialized');
+        },
+        new_request : function(req){
+          this.queue.push(req);
         }
       },
       WORK : {
         _onEnter : function(){
-          var command = this.command;
-          this.info('processCommand', command.cmd, command.args);
-          switch (command.cmd){
-            case 'sms':
-              this.request({
-                url : '/api/sms/send-sms',
-                method : 'POST',
-                data : '<?xml version="1.0" encoding="UTF-8"?><request><Index>-1</Index><Phones><Phone>' + command.args[0] + '</Phone></Phones><Sca></Sca><Content>' + command.args[1] + '</Content><Length>' + command.args[1].length + '</Length><Reserved>1</Reserved><Date>2016-01-31 00:45:1</Date></request>'
-              });
-              break;
-            case 'list':
-              this.request({
-                url : '/api/sms/sms-list',
-                method : 'POST',
-                data : '<?xml version="1.0" encoding="UTF-8"?><request><PageIndex>1</PageIndex><ReadCount>20</ReadCount><BoxType>' + command.args[0] + '</BoxType><SortType>0</SortType><Ascending>0</Ascending><UnreadPreferred>0</UnreadPreferred></request>'
-              });
-              break;
-            case 'delete':
-              this.request({
-                url : '/api/sms/delete-sms',
-                method : 'POST',
-                data : '<?xml version="1.0" encoding="UTF-8"?><request><Index>' + command.args[0] + '</Index></request>'
-              });
-              break;
-          }
+            this._cancelEvent('close_session');
+            this.processCommand();
         },
         http_success : function(res){
             if (this.resp_data.indexOf('<error>') >= 0){
               this.error('error in command response', this.resp_data);
-              this.emit('error', this.resp_data);
-              return;
+              this.currentRequest.res.emit('error', this.resp_data);
+            } else {
+              this.debug(this.resp_data);
+              this.currentRequest.res.emit('success', this.resp_data);
             }
-            this.debug(this.resp_data);
-            this.emit('success', this.resp_data);
-            this.transition('LOGOUT');
+            this.transition('IDLE');
         },
         http_error : function(err){
-          this.error(err);
-          this.emit('error', err);
+          this.malfunction(err);
+        },
+        new_request : function(req){
+          this.queue.push(req);
+        }
+      },
+      IDLE : {
+        _onEnter : function(){
+            this.currentRequest = this.queue.shift();
+            if (this.currentRequest){
+              this.transition('WORK');
+            } else {
+              this._scheduleEvent('close_session', 30000);
+            }
+        },
+        close_session : 'LOGOUT',
+        new_request : function(req){
+          this.currentRequest = req;
+          this.transition('WORK');
+        }
+      },
+      uninitialized : {
+        _onEnter : function(){
+          this.cookie = null;
+          this.csrf_token = null;
+          this.currentRequest = this.queue.shift();
+          if (this.currentRequest){
+            this.transition('GET_CSRF');
+          }
+        },
+        new_request : function(req){
+          this.currentRequest = req;
+          this.transition('GET_CSRF');
         }
       }
-    },
-    CLOSED : {
-      
     }
   });
 
-
-
-module.exports = {
-    sendSms: function(ip, password, phone, messageText){
-        return new huaweiApiRequest(ip, password, {
-          cmd : 'sms',
-          args: [phone, messageText]
-        });
-    },
-    getSms: function(ip, password){
-        return new huaweiApiRequest(ip, password, {
-          cmd : 'list',
-          args: [1]
-        });
-    },
-    delSms: function(ip, password, idx){
-      return new huaweiApiRequest(ip, password, {
-        cmd : 'delete',
-        args: [idx]
-      });
-    },
-};
