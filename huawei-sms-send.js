@@ -1,4 +1,4 @@
-const et    = require('elementtree');
+const et    = require("elementtree");
 
 module.exports = function(RED) {
     function huaweiSmsSendNode(n) {
@@ -8,24 +8,24 @@ module.exports = function(RED) {
         this.config = RED.nodes.getNode(n.config);
         node.on("input", function(msg, send, done){
           var req = this.config.getModem().sendSms(node.phone, msg.payload);
-          req.on('success', function(resp){
+          req.on("success", function(resp){
             msg.payload = resp;
             send(msg);
             done();
 
             var listReq = node.config.getModem().getSms(2);
-            listReq.on('success', function(smsXML){
+            listReq.on("success", function(smsXML){
               var etree = et.parse(smsXML);
-              var messages = etree.findall('./Messages/Message');
+              var messages = etree.findall("./Messages/Message");
               if (messages){
                 for (var i = 0; i < messages.length; i++){
-                  node.config.getModem().delSms(messages[i].findtext('Index'));
+                  node.config.getModem().delSms(messages[i].findtext("Index"));
                 }
               }
             });
 
           });
-          req.on('error', function(err){
+          req.on("error", function(err){
             done(err);
           });
         });
