@@ -10,7 +10,7 @@ module.exports = function(RED) {
         }
         this.config.addReceiver(this);
         var self = this;
-        this.on('close', function(){
+        this.on("close", function(){
           self.config.delReceiver(self);
         });
     }

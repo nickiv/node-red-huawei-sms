@@ -1,7 +1,7 @@
 <script type="text/javascript">
   RED.nodes.registerType("huawei-sms-send", {
     category: "huawei-sms",
-    color: '#FDF0C2',
+    color: '#C7E9C0',
     icon: "font-awesome/fa-sign-out",
     defaults: {
       name: {value: ""},
@@ -32,18 +32,5 @@
 </script>
 
 <script type="text/html" data-help-name="huawei-sms-send">
-  <p>A node that controls SwitchBot device using SwitchBot's <code>command</code> web API</p>
-
-  <h3>Inputs</h3>
-  <dl class="message-properties">
-    <dt>API token <span class="property-type">string</span></dt>
-    <dd>The developer API token which is generated from the official SwitchBot app; simply follow the steps in the package's README.</dd>
-
-    <dt>Device name <span class="property-type">string</span></dt>
-    <dd>The name of the device.</dd>
-
-    <dt>Name <span class="property-type">string</span></dt>
-    <dd>The label of the node.</dd>
-  </dl>
-
+  <p>A node that sends SMS through Huawei API call <code>/api/sms/send-sms</code></p>
 </script>

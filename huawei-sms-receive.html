@@ -26,18 +26,7 @@
 </script>
 
 <script type="text/html" data-help-name="huawei-sms-receive">
-  <p>A node that controls SwitchBot device using SwitchBot's <code>command</code> web API</p>
-
-  <h3>Inputs</h3>
-  <dl class="message-properties">
-    <dt>API token <span class="property-type">string</span></dt>
-    <dd>The developer API token which is generated from the official SwitchBot app; simply follow the steps in the package's README.</dd>
-
-    <dt>Device name <span class="property-type">string</span></dt>
-    <dd>The name of the device.</dd>
-
-    <dt>Name <span class="property-type">string</span></dt>
-    <dd>The label of the node.</dd>
-  </dl>
-
+  <p>A node that gets SMS from Huawei modem by polling API <code>/api/sms/sms-list</code> every 20 seconds. 
+    Received messages are being deleted from device memory. Messages from one modem go to every node connected to it.
+  </p>
 </script>
