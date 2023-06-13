@@ -9,10 +9,10 @@ module.exports = machina.Fsm.extend({
     },
     _scheduleEvent : function(event, timeout){
         if (!(event in this._scheduled_events)){
-            log.debug(this.namespace + ': scheduling ' + event + ' for ' + timeout);
+            this.debug('scheduling ' + event + ' for ' + timeout);
             this._scheduled_events[event] = setTimeout(this._fireEvent.bind(this, event), timeout);
         } else {
-            log.debug(this.namespace + ': attempt to re-schedule event' + event);
+            this.warn('attempt to re-schedule event ' + event);
         }
     },
     _cancelEvent : function(event){
@@ -20,27 +20,27 @@ module.exports = machina.Fsm.extend({
             clearTimeout(this._scheduled_events[event]);
             delete this._scheduled_events[event];
         } else {
-            log.debug(this.namespace + ': attempt to cancel not scheduled event', event);
+            this.debug('attempt to cancel not scheduled event ' + event);
         }
     },
     debug : function(){
       var args = [].slice.call(arguments);
-      args.unshift(this.namespace + ':');
+      args.unshift(ts() + ' [debug] [' + this.namespace + ']');
       return log.debug.apply(log, args);
     },
     error : function(){
       var args = [].slice.call(arguments);
-      args.unshift(this.namespace + ':');
+      args.unshift(ts() + ' [error] [' + this.namespace + ']');
       return log.error.apply(log, args);
     },
     info : function(){
       var args = [].slice.call(arguments);
-      args.unshift(this.namespace + ':');
+      args.unshift(ts() + ' [info] [' + this.namespace + ']');
       return log.info.apply(log, args);
     },
     warn : function(){
       var args = [].slice.call(arguments);
-      args.unshift(this.namespace + ':');
+      args.unshift(ts() + ' [warn] [' + this.namespace + ']');
       return log.warn.apply(log, args);
     },
     constructor : function(){
@@ -49,16 +49,20 @@ module.exports = machina.Fsm.extend({
     }
 });
 
+function ts(){
+    return new Date().toISOString().slice(0, 19).replace('T', ' ');
+}
+
 machina.on('newfsm', function(sm){
     sm.on('handling', function (params) {
-        log.debug(this.namespace + ': handling ' + params.inputType + ' in state ' + this.state);
+        this.debug('handling ' + params.inputType + ' in state ' + this.state);
     });
 
     sm.on('nohandler', function (params) {
-        log.debug(this.namespace + ': unhandled ' + params.inputType + ' in state ' + this.state);
+        this.debug('unhandled ' + params.inputType + ' in state ' + this.state);
     });
 
     sm.on('transition', function (params) {
-        log.debug([this.namespace + ':', 'transition from:', params.fromState, 'to:', params.toState, 'action:', params.action].join(' '));
+        this.debug(['transition from:', params.fromState, 'to:', params.toState, 'action:', params.action].join(' '));
     });
 });
