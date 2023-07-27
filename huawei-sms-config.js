@@ -71,7 +71,10 @@ module.exports = function(RED) {
                             this.debug("Sending msg to receiver #" + id);
                             this.smsReceivers[id].sendme(msg);
                         }
-                        modem.delSms(messages[i].findtext("Index"));
+                        var delReq = modem.delSms(messages[i].findtext("Index"));
+                        delReq.on("error", function(){
+                          node.warn("delReq error");
+                        });
                     }
                   }
                   this.transition("IDLE");

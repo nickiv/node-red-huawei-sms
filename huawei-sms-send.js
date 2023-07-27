@@ -19,11 +19,19 @@ module.exports = function(RED) {
               var messages = etree.findall("./Messages/Message");
               if (messages){
                 for (var i = 0; i < messages.length; i++){
-                  node.config.getModem().delSms(messages[i].findtext("Index"));
+                  let delReq = node.config.getModem().delSms(messages[i].findtext("Index"));
+                  delReq.on("error", function(){
+                    node.warn("delReq error");
+                  });
+                  delReq.on("success", function(){
+                    node.debug("delReq success");
+                  });
                 }
               }
             });
-
+            listReq.on("error", function(){
+              node.warn("listReq error");
+            });
           });
           req.on("error", function(err){
             done(err);
