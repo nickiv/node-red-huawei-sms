@@ -1,12 +1,13 @@
 const http = require("http");
 const crypto = require("crypto");
+const util = require("util");
 
-const TimeMachina = require('./src/time_machina');
+const TimeMachina = require("./src/time_machina");
 const { EventEmitter } = require("stream");
 const { nextTick } = require("process");
 
 module.exports = TimeMachina.extend({
-    namespace : 'HuaweiModem',
+    namespace : 'HuaweiMdm',
 
     initialize : function(ip, password){
       this.debug('intitalize');
@@ -14,6 +15,7 @@ module.exports = TimeMachina.extend({
       this.cookie = null;
       this.login = 'admin';
       this.ip = ip;
+      this.namespace += ' ' + this.ip;
       this.password = password;
       this.queue = [];
     },
@@ -166,11 +168,11 @@ module.exports = TimeMachina.extend({
           var password_hash = crypto.createHash('sha256');
           var hash = crypto.createHash('sha256');
           password_hash.update(this.password);
-          hash.update(this.login + new Buffer(password_hash.digest('hex')).toString('base64') + this.csrf_token);
+          hash.update(this.login + Buffer.from(password_hash.digest('hex')).toString('base64') + this.csrf_token);
           this.request({
             url : '/api/user/login',
             method : 'POST',
-            data : '<?xml version="1.0" encoding="UTF-8"?><request><Username>' + this.login + '</Username><Password>' + new Buffer(hash.digest('hex')).toString('base64') + '</Password><password_type>4</password_type></request>'
+            data : '<?xml version="1.0" encoding="UTF-8"?><request><Username>' + this.login + '</Username><Password>' + Buffer.from(hash.digest('hex')).toString('base64') + '</Password><password_type>4</password_type></request>'
           });
         },
         http_success : function(res){
@@ -224,7 +226,11 @@ module.exports = TimeMachina.extend({
               this.error('error in command response', this.resp_data);
               this.currentRequest.res.emit('error', this.resp_data);
             } else {
-              this.debug(this.resp_data);
+              if (this.resp_data.length == 0){
+                this.warn('Response is empty');
+              } else {
+                this.debug(this.resp_data);
+              }
               this.currentRequest.res.emit('success', this.resp_data);
             }
             this.transition('IDLE');

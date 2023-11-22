@@ -1,6 +1,8 @@
 const HuaweiModem = require("./huawei-modem");
-const et          = require("elementtree");
+const { XMLParser} = require("fast-xml-parser");
 const TimeMachina = require("./src/time_machina");
+
+const parser = new XMLParser();
 
 module.exports = function(RED) {
     function huaweiSmsAccount(n) {
@@ -18,7 +20,7 @@ module.exports = function(RED) {
             return modem;
         }
         this.sm = new TimeMachina({
-            namespace : "Huawei Receive SMS #" + node.id,
+            namespace : "Huawei SmsRcv " + this.ip,
             node : node,
             initialize : function(){
               this.debug("intitalize");
@@ -55,32 +57,46 @@ module.exports = function(RED) {
                 },
                 poll_success : function(smsXML){
                   this.updateStatus({fill: "green", shape: "dot", text: "ok"});
-                  var etree = et.parse(smsXML);
-                  var messages = etree.findall("./Messages/Message");
-                  if (messages){
-                    for (var i = 0; i < messages.length; i++){
-                        var msg = {
-                            payload : {
-                                index      : messages[i].findtext("Index"),
-                                content : messages[i].findtext("Content").trim(),
-                                date    : new Date(messages[i].findtext("Date")),
-                                phone  : messages[i].findtext("Phone"),
-                            }
-                        }
-                        for (var id in this.smsReceivers){
-                            this.debug("Sending msg to receiver #" + id);
-                            this.smsReceivers[id].sendme(msg);
-                        }
-                        var delReq = modem.delSms(messages[i].findtext("Index"));
-                        delReq.on("error", function(){
-                          node.warn("delReq error");
-                        });
-                    }
+                  var etree = parser.parse(smsXML);
+                  if (!etree.hasOwnProperty("response")){
+                    this.warn("Empty or incorrect getSms xml response", etree);
+                    this.transition("IDLE");
+                    return;
+                  }
+                  this.debug("Parsed xml", etree);
+                  var messages = [];
+                  if (etree.response.Count == 1){
+                    messages.push(etree.response.Messages.Message);
+                  } else  if (etree.response.Count > 1){
+                    messages = messages.concat(etree.response.Messages.Message)
+                  } else {
+                    this.debug("No new messages");
+                    this.transition("IDLE");
+                    return;
+                  }
+                  this.debug("Messages", messages);
+                  for (var i = 0; i < messages.length; i++){
+                      var msg = {
+                          payload : {
+                              index      : messages[i].Index,
+                              content : messages[i].Content.trim(),
+                              date    : new Date(messages[i].Date),
+                              phone  : messages[i].Phone,
+                          }
+                      }
+                      for (var id in this.smsReceivers){
+                          this.debug("Sending msg to receiver #" + id);
+                          this.smsReceivers[id].sendme(msg);
+                      }
+                      var delReq = modem.delSms(messages[i].Index);
+                      delReq.on("error", function(){
+                        node.warn("delReq error");
+                      });
                   }
                   this.transition("IDLE");
                 },
                 poll_error : function(err){
-                  this.updateStatus({fill: "red", shape: "ring", text: err});
+                  this.updateStatus({fill: "red", shape: "ring", text: err.message});
                   this.error(err);
                   this.transition("IDLE");
                 },

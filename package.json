@@ -18,7 +18,7 @@
     "node-red"
   ],
   "dependencies": {
-    "machina": "^4.0.0",
-    "elementtree": "0.1.6"
+    "fast-xml-parser": "^4.3.2",
+    "machina": "^4.0.0"
   }
 }
