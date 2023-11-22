@@ -1,4 +1,6 @@
-const et    = require("elementtree");
+const { XMLParser} = require("fast-xml-parser");
+
+const parser = new XMLParser();
 
 module.exports = function(RED) {
     function huaweiSmsSendNode(n) {
@@ -15,22 +17,31 @@ module.exports = function(RED) {
 
             var listReq = node.config.getModem().getSms(2);
             listReq.on("success", function(smsXML){
-              var etree = et.parse(smsXML);
-              var messages = etree.findall("./Messages/Message");
-              if (messages){
-                for (var i = 0; i < messages.length; i++){
-                  let delReq = node.config.getModem().delSms(messages[i].findtext("Index"));
-                  delReq.on("error", function(){
-                    node.warn("delReq error");
-                  });
-                  delReq.on("success", function(){
-                    node.debug("delReq success");
-                  });
-                }
+              var etree = parser.parse(smsXML);
+              if (!etree.hasOwnProperty("response")){
+                node.warn("Empty or incorrect getSms xml response", etree);
+                return;
+              }
+              node.debug("Parsed xml", etree);
+              var messages = [];
+              if (etree.response.Count == 1){
+                messages.push(etree.response.Messages.Message);
+              } else  if (etree.response.Count > 1){
+                messages = messages.concat(etree.response.Messages.Message)
+              }
+              node.debug("Messages", messages);
+              for (var i = 0; i < messages.length; i++){
+                let delReq = node.config.getModem().delSms(messages[i].Index);
+                delReq.on("error", function(err){
+                  node.warn(err.message);
+                });
+                delReq.on("success", function(res){
+                  node.debug("delReq success", res);
+                });
               }
             });
-            listReq.on("error", function(){
-              node.warn("listReq error");
+            listReq.on("error", function(err){
+              node.warn(err.message);
             });
           });
           req.on("error", function(err){
