@@ -9,8 +9,7 @@ const { nextTick } = require("process");
 module.exports = TimeMachina.extend({
     namespace : 'HuaweiMdm',
 
-    initialize : function(ip, password){
-      this.debug('intitalize');
+    initialize : function(ip, password, debug){
       this.csrf_token = null;
       this.cookie = null;
       this.login = 'admin';
@@ -18,6 +17,9 @@ module.exports = TimeMachina.extend({
       this.namespace += ' ' + this.ip;
       this.password = password;
       this.queue = [];
+      if (!debug){
+        this.debug = function(){}
+      }
     },
     sendSms : function(){
       return this.queueRequest('sms', arguments);
@@ -29,7 +31,7 @@ module.exports = TimeMachina.extend({
       return this.queueRequest('delete', arguments);
     },
     queueRequest : function(method, args){
-      this.info('queueRequest', method, args);
+      this.debug('queueRequest', method, args);
       var resEmitter = new EventEmitter();
       process.nextTick(this.handle.bind(this, 'new_request', {
         method : method,
@@ -96,7 +98,7 @@ module.exports = TimeMachina.extend({
     },
     processCommand : function(){
       var req = this.currentRequest;
-      this.info('processCommand', req.method, req.args);
+      this.debug('processCommand', req.method, req.args);
       switch (req.method){
         case 'sms':
           this.request({

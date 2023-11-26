@@ -5,9 +5,10 @@ const TimeMachina = require("./src/time_machina");
 const parser = new XMLParser();
 
 module.exports = function(RED) {
-    function huaweiSmsAccount(n) {
-        RED.nodes.createNode(this, n);
-        this.ip = n.ip;
+    function huaweiSmsAccount(config) {
+        RED.nodes.createNode(this, config);
+        this.ip = config.ip;
+        this.debug = config.debug;
         var node = this;
         this.addReceiver = function(node){
             this.sm.addReceiver(node);
@@ -15,7 +16,7 @@ module.exports = function(RED) {
         this.delReceiver = function(node){
             this.sm.delReceiver(node);
         }
-        var modem = new HuaweiModem(this.ip, this.credentials.password);
+        var modem = new HuaweiModem(this.ip, this.credentials.password, this.debug);
         this.getModem = function(){
             return modem;
         }
@@ -23,7 +24,9 @@ module.exports = function(RED) {
             namespace : "Huawei SmsRcv " + this.ip,
             node : node,
             initialize : function(){
-              this.debug("intitalize");
+              if (!node.debug){
+                this.debug = function(){}
+              }
               this.smsReceivers = [];
             },
             addReceiver : function(node){
@@ -116,7 +119,9 @@ module.exports = function(RED) {
                 new_receiver : "POLL",
               },
               CLOSED : {
-
+                _onEnter : function(){
+                    this._cancelEvent("go_poll");
+                }
               }
             }
         });

@@ -5,6 +5,10 @@
             ip: {
                 value: "192.168.8.1",
                 required: true
+            },
+            debug: {
+                value: false,
+                required: false
             }
         },
         credentials: {
@@ -24,6 +28,10 @@
     <div class="form-row">
         <label for="node-config-input-password">Admin Password</label>
         <input type="password" id="node-config-input-password">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-debug">Debug Logs</label>
+        <input type="checkbox" id="node-config-input-debug" placeholder="" style="display:inline-block; width: auto; vertical-align: top;">
     </div>
 </script>
 
