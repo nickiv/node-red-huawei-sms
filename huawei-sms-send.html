@@ -1,11 +1,12 @@
 <script type="text/javascript">
   RED.nodes.registerType("huawei-sms-send", {
     category: "huawei-sms",
+    paletteLabel: "Send SMS",
     color: '#C7E9C0',
     icon: "font-awesome/fa-sign-out",
     defaults: {
       name: {value: ""},
-      phone: {value: ""},
+      phone: {value: "", required: true},
       config: {value: "", type: "huawei-sms-config"}
     },
     inputs: 1,

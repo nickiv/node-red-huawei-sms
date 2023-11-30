@@ -1,6 +1,7 @@
 <script type="text/javascript">
   RED.nodes.registerType("huawei-sms-receive", {
     category: "huawei-sms",
+    paletteLabel: "Receive SMS",
     color: '#FDF0C2',
     icon: "font-awesome/fa-commenting-o",
     defaults: {
@@ -26,7 +27,14 @@
 </script>
 
 <script type="text/html" data-help-name="huawei-sms-receive">
-  <p>A node that gets SMS from Huawei modem by polling API <code>/api/sms/sms-list</code> every 20 seconds. 
-    Received messages are being deleted from device memory. Messages from one modem go to every node connected to it.
+  <p>A node that gets SMS from Huawei LTE USB Stick by polling API <code>/api/sms/sms-list</code> every 20 seconds. 
+    Received messages are being deleted from device memory. Messages from one stick go to every node connected to it.
   </p>
+  <h3>Output</h3>
+  <dl class="message-properties">
+    <dt>payload
+      <span class="property-type">object</span>
+    </dt>
+    <dd>message along with some metadata fields</dd>
+  </dl>
 </script>

@@ -15,7 +15,11 @@ module.exports = TimeMachina.extend({
       this.login = 'admin';
       this.ip = ip;
       this.namespace += ' ' + this.ip;
-      this.password = password;
+      if (password){
+        this.password = password;
+      } else {
+        this.password = '';
+      }
       this.queue = [];
       if (!debug){
         this.debug = function(){}
@@ -101,10 +105,11 @@ module.exports = TimeMachina.extend({
       this.debug('processCommand', req.method, req.args);
       switch (req.method){
         case 'sms':
+          let msg = req.args[1].toString().trim().substring(0, 300);
           this.request({
             url : '/api/sms/send-sms',
             method : 'POST',
-            data : '<?xml version="1.0" encoding="UTF-8"?><request><Index>-1</Index><Phones><Phone>' + req.args[0] + '</Phone></Phones><Sca></Sca><Content>' + req.args[1] + '</Content><Length>' + req.args[1].length + '</Length><Reserved>1</Reserved><Date>2016-01-31 00:45:1</Date></request>'
+            data : '<?xml version="1.0" encoding="UTF-8"?><request><Index>-1</Index><Phones><Phone>' + req.args[0] + '</Phone></Phones><Sca></Sca><Content>' + msg + '</Content><Length>' + msg.length + '</Length><Reserved>1</Reserved></request>'
           });
           break;
         case 'list':
@@ -123,6 +128,9 @@ module.exports = TimeMachina.extend({
           break;
       }
     },
+    malfunctionStr: function(str){
+      return this.malfunction(new Error(str));
+    },
     malfunction: function(err){
       this.error(err);
       this.currentRequest.res.emit('error', err);
@@ -137,7 +145,7 @@ module.exports = TimeMachina.extend({
         },
         http_success : function(res){
           if (res.statusCode != 200){
-            this.malfunction(util.format('Request to /html/index.html failed with code %d', res.statusCode));
+            this.malfunctionStr(util.format('Request to /html/index.html failed with code %d', res.statusCode));
             return;
           }
   
@@ -153,7 +161,7 @@ module.exports = TimeMachina.extend({
             }
           }
           if (!this.csrf_token){
-            this.malfunction('No csrf token in /html/index.html');
+            this.malfunctionStr('No csrf token in /html/index.html');
             return;
           }
           this.transition('AUTH');
@@ -167,6 +175,10 @@ module.exports = TimeMachina.extend({
       },
       AUTH : {
         _onEnter : function(){
+          if (this.password.length == 0){
+            this.malfunctionStr('Empty password');
+            return;
+          }
           var password_hash = crypto.createHash('sha256');
           var hash = crypto.createHash('sha256');
           password_hash.update(this.password);
@@ -180,11 +192,11 @@ module.exports = TimeMachina.extend({
         http_success : function(res){
           this.debug('login resp', this.resp_data, res.statusCode);
           if (res.statusCode != 200){
-            this.malfunction(util.format('Request to /api/user/login failed with code %d', res.statusCode));
+            this.malfunctionStr(util.format('Request to /api/user/login failed with code %d', res.statusCode));
             return;
           }
           if (this.resp_data.indexOf('<error>') >= 0){
-            this.malfunction(this.resp_data);
+            this.malfunctionStr(this.resp_data);
             return;
           }
           this.transition('WORK');
