@@ -1,6 +1,8 @@
 const http = require("http");
 const crypto = require("crypto");
 const util = require("util");
+const { XMLParser} = require("fast-xml-parser");
+const parser = new XMLParser();
 
 const TimeMachina = require("./src/time_machina");
 const { EventEmitter } = require("stream");
@@ -47,12 +49,16 @@ module.exports = TimeMachina.extend({
     setCookie : function(res){
       if ('set-cookie' in res.headers){
         this.cookie = res.headers['set-cookie'][0].split(';')[0];
-        this.debug('cookie', this.cookie);
+        this.debug('setCookie cookie', this.cookie);
       }
     },
     setCSRFToken : function(token){
       this.csrf_token = token;
       this.debug('CSRF token', this.csrf_token);
+    },
+    setSessionId : function(id){
+      this.cookie = 'SessionID=' + id.replace("SessionID=", "");
+      this.debug('setSessionId cookie', this.cookie);
     },
     request : function(params){
       var options = {
@@ -140,28 +146,26 @@ module.exports = TimeMachina.extend({
       GET_CSRF : {
         _onEnter : function(){
           this.request({
-            url : '/html/index.html'
+            url : '/api/webserver/SesTokInfo'
           });
         },
         http_success : function(res){
           if (res.statusCode != 200){
-            this.malfunctionStr(util.format('Request to /html/index.html failed with code %d', res.statusCode));
+            this.malfunctionStr(util.format('Request to SesTokInfo failed with code %d', res.statusCode));
             return;
           }
-  
-          var strings = this.resp_data.split('\n');
-          for (var i = 0; i < strings.length; i++){
-            if (strings[i].trim().indexOf('<meta') == 0){
-              var reg = new RegExp('name=\"csrf_token\"\\s+content=\"(.*)\"');
-              var matches = reg.exec(strings[i]);
-              if (matches){
-                this.setCSRFToken(matches[1]);
-                break;
-              }
-            }
+          var etree = parser.parse(this.resp_data);
+          if (!etree.hasOwnProperty("response")){
+            this.malfunctionStr("Empty or incorrect SesTokInfo xml response");
+            return;
           }
+          this.debug("Parsed xml", etree);
+ 
+          this.setCSRFToken(etree.response.TokInfo);
+          this.setSessionId(etree.response.SesInfo);
+
           if (!this.csrf_token){
-            this.malfunctionStr('No csrf token in /html/index.html');
+            this.malfunctionStr('No csrf token in SesTokInfo');
             return;
           }
           this.transition('AUTH');
@@ -195,8 +199,17 @@ module.exports = TimeMachina.extend({
             this.malfunctionStr(util.format('Request to /api/user/login failed with code %d', res.statusCode));
             return;
           }
-          if (this.resp_data.indexOf('<error>') >= 0){
+          let etree = parser.parse(this.resp_data);
+          if (etree.hasOwnProperty('error')){
+            if (etree.error.code == 108006){
+              this.malfunctionStr('Incorrect password');
+              return;
+            }
             this.malfunctionStr(this.resp_data);
+            return;
+          }
+          if (!etree.hasOwnProperty('response')){
+            this.malfunctionStr('Empty or incorrect login xml response');
             return;
           }
           this.transition('WORK');
