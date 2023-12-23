@@ -50,7 +50,23 @@ module.exports = machina.Fsm.extend({
 });
 
 function ts(){
-    return new Date().toISOString().slice(0, 19).replace('T', ' ');
+    //return new Date().toISOString().slice(0, 19).replace('T', ' ');
+    var date = new Date();
+
+    var day = date.getDate();
+    var monthIndex = date.getMonth();
+    var hours = date.getHours();
+    var minutes = date.getMinutes();
+    var seconds = date.getSeconds();
+
+    var monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+    ];
+
+    return day + ' ' + monthNames[monthIndex] + ' ' + 
+        ("0" + hours).slice(-2) + ':' + 
+        ("0" + minutes).slice(-2) + ':' + 
+        ("0" + seconds).slice(-2);
 }
 
 machina.on('newfsm', function(sm){

@@ -6,7 +6,40 @@ const parser = new XMLParser();
 
 const TimeMachina = require("./src/time_machina");
 const { EventEmitter } = require("stream");
-const { nextTick } = require("process");
+
+function code2error(code){
+    switch (parseInt(code)){
+      case 100002: return "not supported by firmware or incorrect API path";
+      case 100003: return "unauthorized";
+      case 100004: return "system busy";
+      case 100005: return "unknown error";
+      case 100006: return "invalid parameter";
+      case 100009: return "write error";
+      case 103002: return "unknown error";
+      case 103015: return "unknown error";
+      case 108001: return "invalid username";
+      case 108002: return "invalid password";
+      case 108003: return "user already logged in";
+      case 108006: return "invalid username or password";
+      case 108007: return "invalid username, password, or session timeout";
+    }
+    return false;
+}
+
+function getCurrentDateTime() {
+  var date = new Date();
+
+  var year = date.getFullYear();
+  var month = ("0" + (date.getMonth() + 1)).slice(-2);
+  var day = ("0" + date.getDate()).slice(-2);
+  var hours = ("0" + date.getHours()).slice(-2);
+  var minutes = ("0" + date.getMinutes()).slice(-2);
+  var seconds = ("0" + date.getSeconds()).slice(-2);
+
+  var formattedTime = year + '-' + month + '-' + day + ' ' + hours + ':' + minutes + ':' + seconds;
+
+  return formattedTime;
+}
 
 module.exports = TimeMachina.extend({
     namespace : 'HuaweiMdm',
@@ -115,14 +148,33 @@ module.exports = TimeMachina.extend({
           this.request({
             url : '/api/sms/send-sms',
             method : 'POST',
-            data : '<?xml version="1.0" encoding="UTF-8"?><request><Index>-1</Index><Phones><Phone>' + req.args[0] + '</Phone></Phones><Sca></Sca><Content>' + msg + '</Content><Length>' + msg.length + '</Length><Reserved>1</Reserved></request>'
+            data : `<?xml version="1.0" encoding="UTF-8"?>
+<request>
+<Index>-1</Index>
+<Phones>
+<Phone>${req.args[0]}</Phone>
+</Phones>
+<Sca></Sca>
+<Content>${msg}</Content>
+<Length>${msg.length}</Length>
+<Reserved>1</Reserved>
+<Date>${getCurrentDateTime()}</Date>
+</request>`
           });
           break;
         case 'list':
           this.request({
             url : '/api/sms/sms-list',
             method : 'POST',
-            data : '<?xml version="1.0" encoding="UTF-8"?><request><PageIndex>1</PageIndex><ReadCount>20</ReadCount><BoxType>' + req.args[0] + '</BoxType><SortType>0</SortType><Ascending>0</Ascending><UnreadPreferred>0</UnreadPreferred></request>'
+            data : `<?xml version="1.0" encoding="UTF-8"?>
+<request>
+<PageIndex>1</PageIndex>
+<ReadCount>20</ReadCount>
+<BoxType>${req.args[0]}</BoxType>
+<SortType>0</SortType>
+<Ascending>0</Ascending>
+<UnreadPreferred>0</UnreadPreferred>
+</request>`
           });
           break;
         case 'delete':
@@ -200,12 +252,9 @@ module.exports = TimeMachina.extend({
             return;
           }
           let etree = parser.parse(this.resp_data);
+          this.debug('login resp xml', etree);
           if (etree.hasOwnProperty('error')){
-            if (etree.error.code == 108006){
-              this.malfunctionStr('Incorrect password');
-              return;
-            }
-            this.malfunctionStr(this.resp_data);
+            this.malfunctionStr(code2error(etree.error.code) || this.resp_data);
             return;
           }
           if (!etree.hasOwnProperty('response')){
@@ -250,8 +299,10 @@ module.exports = TimeMachina.extend({
         },
         http_success : function(res){
             if (this.resp_data.indexOf('<error>') >= 0){
-              this.error('error in command response', this.resp_data);
-              this.currentRequest.res.emit('error', this.resp_data);
+              this.debug('error in command response', this.resp_data);
+              //this.currentRequest.res.emit('error', this.resp_data);
+              this.malfunctionStr(this.resp_data);
+              return;
             } else {
               if (this.resp_data.length == 0){
                 this.warn('Response is empty');
