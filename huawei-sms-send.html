@@ -6,7 +6,7 @@
     icon: "font-awesome/fa-sign-out",
     defaults: {
       name: {value: ""},
-      phone: {value: "", required: true},
+      phone: {value: "", required: true, validate: RED.validators.regex(/^[+]?[0-9]{3,15}$/)},
       config: {value: "", type: "huawei-sms-config"}
     },
     inputs: 1,
