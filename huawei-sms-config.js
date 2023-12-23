@@ -82,7 +82,7 @@ module.exports = function(RED) {
                       var msg = {
                           payload : {
                               index      : messages[i].Index,
-                              content : messages[i].Content.trim(),
+                              content : messages[i].Content.toString().trim(),
                               date    : new Date(messages[i].Date),
                               phone  : messages[i].Phone,
                           }

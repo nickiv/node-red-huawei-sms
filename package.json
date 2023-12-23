@@ -1,6 +1,6 @@
 {
   "name": "@nickiv/node-red-huawei-sms",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "Nodes to send and receive SMS from Huawei LTE USB Stick",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
