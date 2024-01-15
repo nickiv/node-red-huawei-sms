@@ -1,6 +1,6 @@
 {
   "name": "@nickiv/node-red-huawei-sms",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "description": "Nodes to send and receive SMS from Huawei LTE USB Stick",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -10,7 +10,11 @@
       "huawei-sms-send": "huawei-sms-send.js",
       "huawei-sms-receive": "huawei-sms-receive.js",
       "huawei-sms-config": "huawei-sms-config.js"
-    }
+    },
+    "version": ">=2.0.0"
+  },
+  "engines": {
+    "node": ">=12.0.0"
   },
   "author": "Nikolay Ivannikov",
   "license": "MIT",

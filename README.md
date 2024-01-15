@@ -24,6 +24,11 @@ I tested this module for several months on couple of devices E3372h-320 with fir
 
 For clarity I'm not related in any way with Huawei.
 
+### Compatible devices
+
+This module also works fine with other Huawei devices:
+* E8231s-2
+
 
 ## Install
 

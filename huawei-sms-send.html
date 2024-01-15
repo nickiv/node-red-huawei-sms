@@ -6,7 +6,7 @@
     icon: "font-awesome/fa-sign-out",
     defaults: {
       name: {value: ""},
-      phone: {value: "", required: true, validate: RED.validators.regex(/^[+]?[0-9]{3,15}$/)},
+      phone: {value: "", required: true, validate: RED.validators.regex(/^([+]?[0-9]{3,15};){0,10}[+]?[0-9]{3,15}$/)},
       config: {value: "", type: "huawei-sms-config"}
     },
     inputs: 1,
@@ -33,5 +33,7 @@
 </script>
 
 <script type="text/html" data-help-name="huawei-sms-send">
-  <p>A node that sends SMS through Huawei API call <code>/api/sms/send-sms</code></p>
+  <p>This node enables the sending of SMS messages using Huawei's API endpoint <code>/api/sms/send-sms</code>.</p>
+  <p>You can set the recipient's phone number dynamically by using the <code>msg.phone</code> property. To send messages to multiple recipients at once, list their numbers separated by semicolons. You can also set msg.phone to array.</p>
+  <p>To ensure compliance with Huawei API's rate limiting, the node introduces a deliberate delay of about 2 seconds between the sending of each message.</p>
 </script>

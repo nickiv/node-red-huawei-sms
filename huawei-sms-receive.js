@@ -8,10 +8,14 @@ module.exports = function(RED) {
         this.updateStatus = function(status){
           this.status(status);
         }
-        this.config.addReceiver(this);
+        if (this.config){// can be empty while not initialized
+          this.config.addReceiver(this);
+        }
         var self = this;
         this.on("close", function(){
-          self.config.delReceiver(self);
+          if (self.config){
+            self.config.delReceiver(self);
+          }
         });
     }
 
