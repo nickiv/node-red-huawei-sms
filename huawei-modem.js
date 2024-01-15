@@ -59,6 +59,7 @@ module.exports = TimeMachina.extend({
       if (!debug){
         this.debug = function(){}
       }
+      this.loggedIn = false;
     },
     sendSms : function(){
       return this.queueRequest('sms', arguments);
@@ -145,6 +146,8 @@ module.exports = TimeMachina.extend({
       switch (req.method){
         case 'sms':
           let msg = req.args[1].toString().trim().substring(0, 300);
+          // fix: req.args[0] can be string with delimiter ',' and it will be splitted into array and for each element we need to add phone element in phones element
+          let phones = req.args[0].split(';').map(phone => `<Phone>${phone}</Phone>`).join('');
           this.request({
             url : '/api/sms/send-sms',
             method : 'POST',
@@ -152,15 +155,14 @@ module.exports = TimeMachina.extend({
 <request>
 <Index>-1</Index>
 <Phones>
-<Phone>${req.args[0]}</Phone>
+${phones}
 </Phones>
 <Sca></Sca>
 <Content>${msg}</Content>
 <Length>${msg.length}</Length>
 <Reserved>1</Reserved>
 <Date>${getCurrentDateTime()}</Date>
-</request>`
-          });
+</request>`});
           break;
         case 'list':
           this.request({
@@ -174,8 +176,7 @@ module.exports = TimeMachina.extend({
 <SortType>0</SortType>
 <Ascending>0</Ascending>
 <UnreadPreferred>0</UnreadPreferred>
-</request>`
-          });
+</request>`});
           break;
         case 'delete':
           this.request({
@@ -192,7 +193,11 @@ module.exports = TimeMachina.extend({
     malfunction: function(err){
       this.error(err);
       this.currentRequest.res.emit('error', err);
-      this.transition('uninitialized');
+      if (this.loggedIn){
+        this.transition('LOGOUT');
+      } else {
+        this.transition('uninitialized');
+      }
     },
     states : {
       GET_CSRF : {
@@ -294,13 +299,21 @@ module.exports = TimeMachina.extend({
       },
       WORK : {
         _onEnter : function(){
+            this.loggedIn = true;
             this._cancelEvent('close_session');
             this.processCommand();
         },
         http_success : function(res){
             if (this.resp_data.indexOf('<error>') >= 0){
               this.debug('error in command response', this.resp_data);
-              //this.currentRequest.res.emit('error', this.resp_data);
+              var etree = parser.parse(this.resp_data);
+              if (etree.hasOwnProperty('error')){
+                if ([113004].indexOf(etree.error.code) >= 0){// filter errors that doesnt require relogin
+                  this.currentRequest.res.emit('error', new Error(this.resp_data));
+                  this.transition('IDLE');
+                  return;
+                }
+              }
               this.malfunctionStr(this.resp_data);
               return;
             } else {
@@ -337,6 +350,7 @@ module.exports = TimeMachina.extend({
       },
       uninitialized : {
         _onEnter : function(){
+          this.loggedIn = false;
           this.cookie = null;
           this.csrf_token = null;
           this.currentRequest = this.queue.shift();
