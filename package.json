@@ -1,6 +1,6 @@
 {
   "name": "@nickiv/node-red-huawei-sms",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "description": "Nodes to send and receive SMS from Huawei LTE USB Stick",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -25,13 +25,13 @@
   ],
   "dependencies": {
     "fast-xml-parser": "^4.3.2",
+    "he": "^1.2.0",
     "machina": "^4.0.0"
   },
   "main": "huawei-modem.js",
   "directories": {
     "example": "examples"
   },
-  "devDependencies": {},
   "repository": {
     "type": "git",
     "url": "git+https://github.com/nickiv/node-red-huawei-sms.git"

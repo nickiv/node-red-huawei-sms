@@ -6,6 +6,10 @@
                 value: "192.168.8.1",
                 required: true
             },
+            concat: {
+                value: true,
+                required: false
+            },
             debug: {
                 value: false,
                 required: false
@@ -28,6 +32,10 @@
     <div class="form-row">
         <label for="node-config-input-password">Admin Password</label>
         <input type="password" id="node-config-input-password">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-concat">Concat long messages</label>
+        <input type="checkbox" id="node-config-input-concat" placeholder="" style="display:inline-block; width: auto; vertical-align: top;">
     </div>
     <div class="form-row">
         <label for="node-config-input-debug">Debug Logs</label>
