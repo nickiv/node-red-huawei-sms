@@ -1,5 +1,6 @@
 *.tgz
 *.sh
-test.js
 node_modules
 .vscode
+*.txt
+test*
