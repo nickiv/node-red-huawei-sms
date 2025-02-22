@@ -1,6 +1,6 @@
 {
   "name": "@nickiv/node-red-huawei-sms",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Nodes to send and receive SMS from Huawei LTE USB Stick",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -25,8 +25,8 @@
     "huawei"
   ],
   "dependencies": {
-    "fast-xml-parser": "^4.3.2",
-    "he": "^1.2.0",
+    "fast-xml-parser": "^4.5.3",
+    "html-entities": "^2.5.2",
     "machina": "^4.0.0"
   },
   "main": "huawei-modem.js",

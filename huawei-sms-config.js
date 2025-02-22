@@ -1,8 +1,7 @@
 const HuaweiModem = require("./huawei-modem");
 const { XMLParser } = require("fast-xml-parser");
 const TimeMachina = require("./src/time_machina");
-const he = require('he');
-// fix: require event emitter
+const hten = require("html-entities");
 const EventEmitter = require('events');
 
 const parser = new XMLParser();
@@ -220,7 +219,7 @@ module.exports = function (RED) {
               var msg = {
                 payload: {
                   index: messages[i].Index,
-                  content: he.decode(messages[i].Content.toString().trim()),
+                  content: hten.decode(messages[i].Content.toString().trim()),
                   date: msgDate,
                   phone: messages[i].Phone,
                 }
