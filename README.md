@@ -29,6 +29,7 @@ For clarity I'm not related in any way with Huawei.
 
 This module also works fine with other Huawei devices:
 * E8231s-2
+* E8372
 
 
 ## Install
