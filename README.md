@@ -41,7 +41,7 @@ $ npm install @nickiv/node-red-huawei-sms
 
 ### Receive SMS
 
-To receive an SMS drag Receive SMS node to flow. Add SMS config node or select the one you set up earlier. Upon receiving an SMS node will emit an object containing message with some metadata. New messages are checked every 20 seconds. Received messages are being deleted from Inbox of the stick. When flow starts all messages that are currently in the Inbox will be emitted.
+To receive an SMS drag Receive SMS node to flow. Add SMS config node or select the one you set up earlier. Upon receiving an SMS node will emit an object containing message with some metadata. New messages are checked every 5 seconds. Received messages are being deleted from Inbox of the stick. When flow starts all messages that are currently in the Inbox will be emitted.
 
 ### Send SMS
 
